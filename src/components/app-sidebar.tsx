@@ -1,5 +1,5 @@
-import { Package, TrendingUp } from "lucide-react"
-import Link from "next/link"
+import { Package, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
 import {
   Sidebar,
@@ -11,7 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 const menuItems = [
   {
@@ -26,7 +26,7 @@ const menuItems = [
     icon: Package,
     description: "View and manage inventory items",
   },
-]
+];
 
 export function AppSidebar() {
   return (
@@ -36,7 +36,9 @@ export function AppSidebar() {
           <Package className="h-6 w-6" />
           <div className="flex flex-col">
             <span className="font-semibold text-lg">Inventory</span>
-            <span className="text-xs text-muted-foreground">Management System</span>
+            <span className="text-xs text-muted-foreground">
+              Management System
+            </span>
           </div>
         </div>
       </SidebarHeader>
@@ -60,5 +62,5 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }
