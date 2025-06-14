@@ -1,9 +1,9 @@
 import {
-  date,
   integer,
   pgTable,
   serial,
   text,
+  timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
 
@@ -11,7 +11,9 @@ export const itemTable = pgTable("item", {
   id: serial("id").primaryKey(),
   kode: varchar("kode").notNull().unique(),
   nama: text("nama").notNull(),
-  harga: integer("harga").notNull(),
+  hargaBeli: integer("harga_beli").notNull(),
+  hargaJual: integer("harga_jual").notNull(),
+  kategori: varchar("kategori").notNull(),
   stok: integer("stok").notNull(),
 });
 
@@ -21,8 +23,8 @@ export const itemMovementTable = pgTable("item_movement", {
     .notNull()
     .references(() => itemTable.kode, { onDelete: "cascade" }),
   jumlah: integer("jumlah").notNull(),
-  tipe: varchar("tipe", { enum: ["masuk", "keluar"] }).notNull(),
-  tanggal: date("tanggal").notNull(),
+  tipe: varchar("tipe", { enum: ["masuk", "keluar", "rusak"] }).notNull(),
+  tanggal: timestamp("tanggal", { withTimezone: true }).notNull().defaultNow(),
   keterangan: text("keterangan").notNull().default(""),
 });
 
