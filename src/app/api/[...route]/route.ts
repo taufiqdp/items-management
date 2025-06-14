@@ -8,7 +8,7 @@ import {
   ItemMovementInsert,
   ItemMovement,
 } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, gte } from "drizzle-orm";
 import { db } from "@/index";
 
 export const runtime = "nodejs";
@@ -16,7 +16,6 @@ export const runtime = "nodejs";
 const app = new Hono().basePath("/api");
 
 // Endpoint items
-
 app.get("/items", async (c: Context) => {
   const items: Item[] = await db.select().from(itemTable);
   return c.json(items);
@@ -29,7 +28,9 @@ app.post("/items", async (c: Context) => {
     .values({
       kode: body.kode,
       nama: body.nama,
-      harga: body.harga,
+      hargaBeli: body.hargaBeli,
+      hargaJual: body.hargaJual,
+      kategori: body.kategori,
       stok: body.stok,
     })
     .returning();
@@ -44,7 +45,9 @@ app.put("/items/:id", async (c: Context) => {
     .set({
       kode: body.kode,
       nama: body.nama,
-      harga: body.harga,
+      hargaBeli: body.hargaBeli,
+      hargaJual: body.hargaJual,
+      kategori: body.kategori,
       stok: body.stok,
     })
     .where(eq(itemTable.id, Number(id)))
@@ -91,7 +94,23 @@ app.get("/items/:id/movement", async (c: Context) => {
 });
 
 app.get("/movements", async (c: Context) => {
-  const movements: ItemMovement[] = await db.select().from(itemMovementTable);
+  const dateParam = c.req.query("date");
+
+  let movements: ItemMovement[];
+
+  if (dateParam) {
+    const startDate = new Date(dateParam);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 1);
+
+    movements = await db
+      .select()
+      .from(itemMovementTable)
+      .where(gte(itemMovementTable.tanggal, startDate));
+  } else {
+    movements = await db.select().from(itemMovementTable);
+  }
+
   if (movements.length === 0) {
     return c.json({ error: "No movements found" }, 404);
   }
@@ -114,7 +133,7 @@ app.post("/items/:id/movement", async (c: Context) => {
       itemKode: item[0].kode,
       jumlah: body.jumlah,
       tipe: body.tipe,
-      tanggal: body.tanggal,
+      tanggal: body.tanggal ? new Date(body.tanggal) : new Date(),
       keterangan: body.keterangan || "",
     })
     .returning();
@@ -153,6 +172,10 @@ app.put("/items/:id/movement/:movementId", async (c: Context) => {
     .from(itemMovementTable)
     .where(eq(itemMovementTable.id, movementId));
 
+  if (existingMovement.length === 0) {
+    return c.json({ error: "Movement not found" }, 404);
+  }
+
   if (item[0].kode !== existingMovement[0].itemKode) {
     return c.json({ error: "Movement does not belong to this item" }, 400);
   }
@@ -162,22 +185,27 @@ app.put("/items/:id/movement/:movementId", async (c: Context) => {
     .set({
       jumlah: body.jumlah,
       tipe: body.tipe,
-      tanggal: body.tanggal,
+      tanggal: body.tanggal ? new Date(body.tanggal) : new Date(),
       keterangan: body.keterangan || "",
     })
     .where(eq(itemMovementTable.id, movementId))
     .returning();
 
+  // The returning() call might return an empty array if the where clause didn't match.
+  // This check is already done by `existingMovement.length === 0` above, but keeps consistency.
   if (movement.length === 0) {
     return c.json({ error: "Movement not found" }, 404);
   }
 
-  let newStok =
-    item[0].stok +
-    (existingMovement[0].tipe === "masuk"
-      ? -existingMovement[0].jumlah
-      : existingMovement[0].jumlah);
+  let newStok = item[0].stok;
+  // Undo the effect of the existing movement on stock
+  if (existingMovement[0].tipe === "masuk") {
+    newStok -= existingMovement[0].jumlah;
+  } else if (existingMovement[0].tipe === "keluar") {
+    newStok += existingMovement[0].jumlah;
+  }
 
+  // Apply the effect of the new movement on stock
   if (body.tipe === "masuk") {
     newStok += body.jumlah;
   } else if (body.tipe === "keluar") {
@@ -209,6 +237,10 @@ app.delete("/items/:id/movement/:movementId", async (c: Context) => {
     .from(itemMovementTable)
     .where(eq(itemMovementTable.id, movementId));
 
+  if (existingMovement.length === 0) {
+    return c.json({ error: "Movement not found" }, 404);
+  }
+
   if (item[0].kode !== existingMovement[0].itemKode) {
     return c.json({ error: "Movement does not belong to this item" }, 400);
   }
@@ -233,7 +265,10 @@ app.delete("/items/:id/movement/:movementId", async (c: Context) => {
   return c.json(movement[0]);
 });
 
+// The Vercel handle functions can remain for deployment
 export const GET = handle(app);
 export const PUT = handle(app);
 export const POST = handle(app);
 export const DELETE = handle(app);
+
+export type AppType = typeof app;
