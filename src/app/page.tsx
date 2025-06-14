@@ -1,103 +1,278 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import { useState, useEffect } from "react"
+import { format } from "date-fns"
+import { Plus, ArrowUp, ArrowDown, Calendar } from "lucide-react"
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { Separator } from "@/components/ui/separator"
+import { AddMovementDialog } from "@/components/add-movement-dialog"
+import { toast } from "sonner"
+
+interface Item {
+  id: number
+  kode: string
+  nama: string
+  harga: number
+  stok: number
+}
+
+interface Movement {
+  id: number
+  itemKode: string
+  jumlah: number
+  tipe: "masuk" | "keluar"
+  tanggal: string
+  keterangan: string
+  item?: Item
+}
+
+export default function ItemMovementPage() {
+  const [movements, setMovements] = useState<Movement[]>([])
+  const [items, setItems] = useState<Item[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showAddDialog, setShowAddDialog] = useState(false)
+
+  const today = format(new Date(), "yyyy-MM-dd")
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const [movementsRes, itemsRes] = await Promise.all([fetch("/api/movements"), fetch("/api/items")])
+
+      if (movementsRes.ok) {
+        const movementsData = await movementsRes.json()
+        setMovements(movementsData)
+      }
+
+      if (itemsRes.ok) {
+        const itemsData = await itemsRes.json()
+        setItems(itemsData)
+      }
+    } catch (error) {
+      toast.error("Failed to fetch data")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const todayMovements = movements.filter((movement) => movement.tanggal === today)
+
+  const totalIn = todayMovements.filter((m) => m.tipe === "masuk").reduce((sum, m) => sum + m.jumlah, 0)
+
+  const totalOut = todayMovements.filter((m) => m.tipe === "keluar").reduce((sum, m) => sum + m.jumlah, 0)
+
+  const getItemName = (kode: string) => {
+    const item = items.find((item) => item.kode === kode)
+    return item ? item.nama : kode
+  }
+
+  const handleMovementAdded = () => {
+    fetchData()
+    setShowAddDialog(false)
+    toast.success("Movement added successfully")
+  }
+
+  if (loading) {
+    return (
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <h1 className="text-lg font-semibold">Item Movement</h1>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader className="animate-pulse">
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-8 bg-muted rounded w-1/2"></div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+      </SidebarInset>
+    )
+  }
+
+  return (
+    <SidebarInset>
+      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+        <SidebarTrigger />
+        <Separator orientation="vertical" className="mr-2 h-4" />
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4" />
+          <h1 className="text-lg font-semibold">Item Movement</h1>
+        </div>
+        <div className="ml-auto">
+          <Button onClick={() => setShowAddDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Movement
+          </Button>
+        </div>
+      </header>
+
+      <div className="flex flex-1 flex-col gap-4 p-4">
+        {/* Today's Summary */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Today's Items In</CardTitle>
+              <ArrowUp className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{totalIn}</div>
+              <p className="text-xs text-muted-foreground">Items received today</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Today's Items Out</CardTitle>
+              <ArrowDown className="h-4 w-4 text-red-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{totalOut}</div>
+              <p className="text-xs text-muted-foreground">Items dispatched today</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Net Movement</CardTitle>
+              <Calendar className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${totalIn - totalOut >= 0 ? "text-green-600" : "text-red-600"}`}>
+                {totalIn - totalOut >= 0 ? "+" : ""}
+                {totalIn - totalOut}
+              </div>
+              <p className="text-xs text-muted-foreground">Net change today</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Today's Movements Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Today's Movements</CardTitle>
+            <CardDescription>All item movements for {format(new Date(), "MMMM d, yyyy")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {todayMovements.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No movements recorded for today</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Item Code</TableHead>
+                    <TableHead>Item Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Time</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {todayMovements.map((movement) => (
+                    <TableRow key={movement.id}>
+                      <TableCell className="font-mono">{movement.itemKode}</TableCell>
+                      <TableCell>{getItemName(movement.itemKode)}</TableCell>
+                      <TableCell>
+                        <Badge variant={movement.tipe === "masuk" ? "default" : "destructive"}>
+                          {movement.tipe === "masuk" ? (
+                            <>
+                              <ArrowUp className="h-3 w-3 mr-1" />
+                              In
+                            </>
+                          ) : (
+                            <>
+                              <ArrowDown className="h-3 w-3 mr-1" />
+                              Out
+                            </>
+                          )}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-semibold">{movement.jumlah}</TableCell>
+                      <TableCell>{movement.keterangan || "-"}</TableCell>
+                      <TableCell className="text-muted-foreground">{format(new Date(), "HH:mm")}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Movements */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Movements</CardTitle>
+            <CardDescription>Latest 10 item movements across all dates</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {movements.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No movements recorded yet</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Item Code</TableHead>
+                    <TableHead>Item Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Description</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {movements.slice(0, 10).map((movement) => (
+                    <TableRow key={movement.id}>
+                      <TableCell>{format(new Date(movement.tanggal), "MMM d, yyyy")}</TableCell>
+                      <TableCell className="font-mono">{movement.itemKode}</TableCell>
+                      <TableCell>{getItemName(movement.itemKode)}</TableCell>
+                      <TableCell>
+                        <Badge variant={movement.tipe === "masuk" ? "default" : "destructive"}>
+                          {movement.tipe === "masuk" ? (
+                            <>
+                              <ArrowUp className="h-3 w-3 mr-1" />
+                              In
+                            </>
+                          ) : (
+                            <>
+                              <ArrowDown className="h-3 w-3 mr-1" />
+                              Out
+                            </>
+                          )}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-semibold">{movement.jumlah}</TableCell>
+                      <TableCell>{movement.keterangan || "-"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <AddMovementDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        items={items}
+        onSuccess={handleMovementAdded}
+      />
+    </SidebarInset>
+  )
 }
