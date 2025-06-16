@@ -81,7 +81,7 @@ export function AddItemDialog({
         setStok("");
       } else {
         const error = await response.json();
-        throw new Error(error.message || "Failed to add item");
+        toast.error(error.error || "Failed to add item. Please try again.");
       }
     } catch (error) {
       toast.error(

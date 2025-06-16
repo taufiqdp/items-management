@@ -6,7 +6,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -15,9 +14,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import { ArrowUp, ArrowDown } from "lucide-react";
 import { format } from "date-fns";
 import { Item, ItemMovement } from "@/db/schema";
+import TypeBadge from "./type-badge";
+import { id } from "date-fns/locale";
 
 export default function MovementTable({
   movements,
@@ -38,14 +38,13 @@ export default function MovementTable({
     (a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
   );
 
-  console.log("Sorted Movements:", sortedMovements);
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Transaksi Hari Ini</CardTitle>
         <CardDescription>
-          Semua transaksi barang untuk {format(new Date(), "MMMM d, yyyy")}
+          Semua transaksi barang untuk{" "}
+          {format(new Date(), "MMMM d, yyyy", { locale: id })}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -73,23 +72,7 @@ export default function MovementTable({
                   </TableCell>
                   <TableCell>{getItemName(movement.itemKode)}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        movement.tipe === "masuk" ? "default" : "destructive"
-                      }
-                    >
-                      {movement.tipe === "masuk" ? (
-                        <>
-                          <ArrowUp className="h-3 w-3 mr-1" />
-                          Masuk
-                        </>
-                      ) : (
-                        <>
-                          <ArrowDown className="h-3 w-3 mr-1" />
-                          Keluar
-                        </>
-                      )}
-                    </Badge>
+                    <TypeBadge movement={movement} />
                   </TableCell>
                   <TableCell className="font-semibold">
                     {movement.jumlah}

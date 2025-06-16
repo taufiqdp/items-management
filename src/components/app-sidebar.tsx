@@ -1,4 +1,4 @@
-import { Package, TrendingUp } from "lucide-react";
+import { History, Package, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
 import {
@@ -15,16 +15,22 @@ import {
 
 const menuItems = [
   {
-    title: "Item Movement",
+    title: "Transaksi",
     url: "/",
     icon: TrendingUp,
-    description: "Manage item in/out and today's movements",
+    description: "Kelola transaksi barang",
   },
   {
-    title: "Stock Items",
+    title: "Stok Barang",
     url: "/stock",
     icon: Package,
-    description: "View and manage inventory items",
+    description: "Kelola stok barang",
+  },
+  {
+    title: "Riwayat",
+    url: "/history",
+    icon: History,
+    description: "Lihat riwayat transaksi",
   },
 ];
 
@@ -44,7 +50,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (

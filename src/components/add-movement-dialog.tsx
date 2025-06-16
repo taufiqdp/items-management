@@ -186,6 +186,7 @@ export function AddMovementDialog({
                 <SelectContent>
                   <SelectItem value="masuk">Masuk</SelectItem>
                   <SelectItem value="keluar">Keluar</SelectItem>
+                  <SelectItem value="rusak">Rusak</SelectItem>
                 </SelectContent>
               </Select>
             </div>
