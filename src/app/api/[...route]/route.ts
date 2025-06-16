@@ -23,6 +23,16 @@ app.get("/items", async (c: Context) => {
 
 app.post("/items", async (c: Context) => {
   const body: ItemInsert = await c.req.json();
+
+  const kodeExists: Item[] = await db
+    .select()
+    .from(itemTable)
+    .where(eq(itemTable.kode, body.kode));
+
+  if (kodeExists.length > 0) {
+    return c.json({ error: "Kode barang sudah ada" }, 400);
+  }
+
   const item: Item[] = await db
     .insert(itemTable)
     .values({
@@ -53,7 +63,7 @@ app.put("/items/:id", async (c: Context) => {
     .where(eq(itemTable.id, Number(id)))
     .returning();
   if (item.length === 0) {
-    return c.json({ error: "Item not found" }, 404);
+    return c.json({ error: "Barang tidak ditemukan" }, 404);
   }
   return c.json(item[0]);
 });
@@ -65,7 +75,7 @@ app.delete("/items/:id", async (c: Context) => {
     .where(eq(itemTable.id, Number(id)))
     .returning();
   if (item.length === 0) {
-    return c.json({ error: "Item not found" }, 404);
+    return c.json({ error: "Barang tidak ditemukan" }, 404);
   }
   return c.json(item[0]);
 });
@@ -79,7 +89,7 @@ app.get("/items/:id/movement", async (c: Context) => {
     .from(itemTable)
     .where(eq(itemTable.id, id));
   if (item.length === 0) {
-    return c.json({ error: "Item not found" }, 404);
+    return c.json({ error: "Barang tidak ditemukan" }, 404);
   }
   const movements: ItemMovement[] = await db
     .select()
@@ -112,9 +122,46 @@ app.get("/movements", async (c: Context) => {
   }
 
   if (movements.length === 0) {
-    return c.json({ error: "No movements found" }, 404);
+    return c.json({ error: "Tidak ada transaksi yang ditemukan" }, 404);
   }
   return c.json(movements);
+});
+
+export type MovementsWithItem = {
+  id: number;
+  itemKode: string;
+  jumlah: number;
+  tipe: "masuk" | "keluar" | "rusak";
+  tanggal: Date;
+  keterangan: string;
+  itemNama: string;
+  kategori: string;
+  hargaBeli: number;
+  hargaJual: number;
+};
+
+app.get("/movements/all", async (c: Context) => {
+  const movementsWithItem: MovementsWithItem[] = await db
+    .select({
+      id: itemMovementTable.id,
+      itemKode: itemMovementTable.itemKode,
+      jumlah: itemMovementTable.jumlah,
+      tipe: itemMovementTable.tipe,
+      tanggal: itemMovementTable.tanggal,
+      keterangan: itemMovementTable.keterangan,
+
+      itemNama: itemTable.nama,
+      kategori: itemTable.kategori,
+      hargaBeli: itemTable.hargaBeli,
+      hargaJual: itemTable.hargaJual,
+    })
+    .from(itemMovementTable)
+    .innerJoin(itemTable, eq(itemMovementTable.itemKode, itemTable.kode));
+
+  if (movementsWithItem.length === 0) {
+    return c.json({ error: "Tidak ada transaksi yang ditemukan" }, 404);
+  }
+  return c.json(movementsWithItem);
 });
 
 app.post("/items/:id/movement", async (c: Context) => {

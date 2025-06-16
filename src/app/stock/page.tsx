@@ -121,7 +121,7 @@ export default function StockItemsPage() {
         <Separator orientation="vertical" className="mr-2 h-4" />
         <div className="flex items-center gap-2">
           <Package className="h-4 w-4" />
-          <h1 className="text-lg font-semibold">Barang Stok</h1>
+          <h1 className="text-lg font-semibold">Stok Barang</h1>
         </div>
         <div className="ml-auto flex items-center gap-2">
           <div className="relative">
