@@ -30,10 +30,10 @@ export default function MovementCards({
           <CardTitle className="text-sm font-medium">
             Barang Masuk Hari Ini
           </CardTitle>
-          <ArrowUp className="h-4 w-4 text-green-600" />
+          <ArrowUp className="h-4 w-4 " />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">{totalIn}</div>
+          <div className="text-2xl font-bold ">{totalIn}</div>
           <p className="text-xs text-muted-foreground">
             Barang diterima hari ini
           </p>

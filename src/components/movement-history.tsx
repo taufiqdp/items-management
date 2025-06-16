@@ -37,13 +37,13 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { ItemMovement } from "@/db/schema";
 import TypeBadge from "./type-badge";
+import { MovementsWithItem } from "@/app/api/[...route]/route";
 
 export default function MovementHistory({
   movements,
 }: {
-  movements: ItemMovement[];
+  movements: MovementsWithItem[];
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
@@ -107,6 +107,10 @@ export default function MovementHistory({
           aValue = a.itemKode;
           bValue = b.itemKode;
           break;
+        case "itemNama":
+          aValue = a.itemNama;
+          bValue = b.itemNama;
+          break;
         default:
           aValue = a.tanggal;
           bValue = b.tanggal;
@@ -160,12 +164,10 @@ export default function MovementHistory({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Masuk</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <TrendingUp className="h-4 w-4 " />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {stats.totalMasuk}
-            </div>
+            <div className="text-2xl font-bold ">{stats.totalMasuk}</div>
             <p className="text-xs text-muted-foreground">
               {stats.countMasuk} transaksi
             </p>
@@ -177,7 +179,7 @@ export default function MovementHistory({
             <TrendingDown className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-red-600">
               {stats.totalKeluar}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -311,6 +313,7 @@ export default function MovementHistory({
                   <SelectItem value="tanggal">Tanggal</SelectItem>
                   <SelectItem value="jumlah">Jumlah</SelectItem>
                   <SelectItem value="itemKode">Kode Item</SelectItem>
+                  <SelectItem value="itemNama">Nama Item</SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -348,8 +351,8 @@ export default function MovementHistory({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
                   <TableHead>Kode Barang</TableHead>
+                  <TableHead>Nama Barang</TableHead>
                   <TableHead>Jenis</TableHead>
                   <TableHead className="text-right">Jumlah</TableHead>
                   <TableHead>Tanggal</TableHead>
@@ -370,11 +373,11 @@ export default function MovementHistory({
                 ) : (
                   filteredAndSortedMovements.map((movement) => (
                     <TableRow key={movement.id}>
-                      <TableCell className="font-medium">
-                        #{movement.id}
-                      </TableCell>
                       <TableCell className="font-mono">
                         {movement.itemKode}
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {movement.itemNama}
                       </TableCell>
                       <TableCell>
                         <TypeBadge movement={movement} />
