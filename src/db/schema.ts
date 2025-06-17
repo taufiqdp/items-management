@@ -1,4 +1,5 @@
 import {
+  bigint,
   integer,
   pgTable,
   serial,
@@ -11,8 +12,8 @@ export const itemTable = pgTable("item", {
   id: serial("id").primaryKey(),
   kode: varchar("kode").notNull().unique(),
   nama: text("nama").notNull(),
-  hargaBeli: integer("harga_beli").notNull(),
-  hargaJual: integer("harga_jual").notNull(),
+  hargaBeli: bigint("harga_beli", { mode: "number" }).notNull(),
+  hargaJual: bigint("harga_jual", { mode: "number" }).notNull(),
   kategori: varchar("kategori").notNull(),
   stok: integer("stok").notNull(),
 });
@@ -26,6 +27,7 @@ export const itemMovementTable = pgTable("item_movement", {
   tipe: varchar("tipe", { enum: ["masuk", "keluar", "rusak"] }).notNull(),
   tanggal: timestamp("tanggal", { withTimezone: true }).notNull().defaultNow(),
   keterangan: text("keterangan").notNull().default(""),
+  harga: bigint("harga", { mode: "number" }).notNull().default(0),
 });
 
 export type Item = typeof itemTable.$inferSelect;

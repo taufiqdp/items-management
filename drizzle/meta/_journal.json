@@ -15,6 +15,13 @@
       "when": 1749904270495,
       "tag": "0001_icy_whirlwind",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1750131865740,
+      "tag": "0002_numerous_wrecker",
+      "breakpoints": true
     }
   ]
 }
