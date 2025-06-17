@@ -134,6 +134,7 @@ export type MovementsWithItem = {
   tipe: "masuk" | "keluar" | "rusak";
   tanggal: Date;
   keterangan: string;
+  harga: number;
   itemNama: string;
   kategori: string;
   hargaBeli: number;
@@ -149,6 +150,7 @@ app.get("/movements/all", async (c: Context) => {
       tipe: itemMovementTable.tipe,
       tanggal: itemMovementTable.tanggal,
       keterangan: itemMovementTable.keterangan,
+      harga: itemMovementTable.harga,
 
       itemNama: itemTable.nama,
       kategori: itemTable.kategori,
@@ -174,6 +176,9 @@ app.post("/items/:id/movement", async (c: Context) => {
   if (item.length === 0) {
     return c.json({ error: "Item not found" }, 404);
   }
+
+  const harga = body.tipe === "keluar" ? item[0].hargaJual : item[0].hargaBeli;
+
   const movement: ItemMovement[] = await db
     .insert(itemMovementTable)
     .values({
@@ -182,13 +187,14 @@ app.post("/items/:id/movement", async (c: Context) => {
       tipe: body.tipe,
       tanggal: body.tanggal ? new Date(body.tanggal) : new Date(),
       keterangan: body.keterangan || "",
+      harga: harga,
     })
     .returning();
 
   let newStok = item[0].stok;
   if (body.tipe === "masuk") {
     newStok += body.jumlah;
-  } else if (body.tipe === "keluar") {
+  } else if (body.tipe === "keluar" || body.tipe === "rusak") {
     newStok -= body.jumlah;
     if (newStok < 0) {
       return c.json({ error: "Stok tidak cukup" }, 400);
@@ -227,6 +233,8 @@ app.put("/items/:id/movement/:movementId", async (c: Context) => {
     return c.json({ error: "Movement does not belong to this item" }, 400);
   }
 
+  const harga = body.tipe === "keluar" ? item[0].hargaJual : item[0].hargaBeli;
+
   const movement: ItemMovement[] = await db
     .update(itemMovementTable)
     .set({
@@ -234,12 +242,11 @@ app.put("/items/:id/movement/:movementId", async (c: Context) => {
       tipe: body.tipe,
       tanggal: body.tanggal ? new Date(body.tanggal) : new Date(),
       keterangan: body.keterangan || "",
+      harga: harga,
     })
     .where(eq(itemMovementTable.id, movementId))
     .returning();
 
-  // The returning() call might return an empty array if the where clause didn't match.
-  // This check is already done by `existingMovement.length === 0` above, but keeps consistency.
   if (movement.length === 0) {
     return c.json({ error: "Movement not found" }, 404);
   }
